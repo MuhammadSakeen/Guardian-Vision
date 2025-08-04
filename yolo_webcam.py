@@ -24,7 +24,7 @@ while True:
 
         if label == "person" and conf > 0.6:
             x1, y1, x2, y2 = map(int, box.xyxy[0]) #These are the box corners: (x1, y1) = top-left, (x2, y2) = bottom-right We use these to draw the box.
-            cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 255, 0), 2git ) # draws a green box of thickness 2
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 255, 0), 2 ) # draws a green box of thickness 2
             cv2.putText(annotated, f"{label} {conf:.2f}", (x1, y1 - 10),
             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
     
