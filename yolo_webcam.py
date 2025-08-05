@@ -16,8 +16,9 @@ while True:
     #annotated = results[0].plot() #plot() -> draw a box or rectangle to objects it found with confidedent score
     
     annotated = frame.copy()
-
+    count = 0
     for box in results.boxes:
+        count = count + 1
         cls_id = int(box.cls[0]) #built in id numebrs to say what obj it is
         conf = float(box.conf[0]) #return the considence score
         label = model.names[cls_id] #Convert the class number into a word, like 'person' or 'car'
@@ -27,9 +28,10 @@ while True:
             cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 255, 0), 2 ) # draws a green box of thickness 2
             cv2.putText(annotated, f"{label} {conf:.2f}", (x1, y1 - 10),
             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-    
+    cv2.putText(annotated, f"People: {count}", (20, 40),
+    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
     cv2.imshow("People Detection Only", annotated)
-
+    print(f"People Detected: {count}")
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
