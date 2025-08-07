@@ -1,39 +1,91 @@
-from ultralytics import YOLO #used for object detection
-import cv2 #model of openCV to open or access webcam
+import cv2
+import cvlib as cv
+from cvlib.object_detection import draw_bbox
+import numpy as np
 
-model = YOLO("yolov8m.pt")
+# Load gender detection model
+gender_net = cv2.dnn.readNetFromCaffe(
+    "models/model_detection/gender_deploy (1).prototxt",
+    "models/model_detection/gender_net.caffemodel"
+)
 
-cap = cv2.VideoCapture(0) # cap stands for capture
+gender_list = ['Male', 'Female']
 
-while True:
-    ret, frame = cap.read() # ret ->  tells us if the frame was successfully captured (True/False), frame is the actual image from the webcam
+# Start webcam
+webcam = cv2.VideoCapture(0)
 
-    if not ret:
+if not webcam.isOpened():
+    print("Could not open webcam")
+    exit()
+
+while webcam.isOpened():
+    status, frame = webcam.read()
+    if not status:
         break
 
-    results = model(frame)[0]
-
-    #annotated = results[0].plot() #plot() -> draw a box or rectangle to objects it found with confidedent score
+    # Detect persons in the frame
+    bbox, label, conf = cv.detect_common_objects(frame)
     
-    annotated = frame.copy()
-    count = 0
-    for box in results.boxes:
-        count = count + 1
-        cls_id = int(box.cls[0]) #built in id numebrs to say what obj it is
-        conf = float(box.conf[0]) #return the considence score
-        label = model.names[cls_id] #Convert the class number into a word, like 'person' or 'car'
+    male_count = 0
+    female_count = 0
 
-        if label == "person" and conf > 0.6:
-            x1, y1, x2, y2 = map(int, box.xyxy[0]) #These are the box corners: (x1, y1) = top-left, (x2, y2) = bottom-right We use these to draw the box.
-            cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 255, 0), 2 ) # draws a green box of thickness 2
-            cv2.putText(annotated, f"{label} {conf:.2f}", (x1, y1 - 10),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-    cv2.putText(annotated, f"People: {count}", (20, 40),
-    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-    cv2.imshow("People Detection Only", annotated)
-    print(f"People Detected: {count}")
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+    for i, l in enumerate(label):
+        if l == 'person':
+            # Crop the person from frame
+            x, y, x2, y2 = bbox[i]
+            person_img = frame[y:y2, x:x2]
+
+            # Detect face within the person
+            face_bbox, _ = cv.detect_face(person_img)
+
+            for fx, fy, fx2, fy2 in face_bbox:
+                # Extract face image
+                face_img = person_img[fy:fy2, fx:fx2]
+
+                # Preprocess and predict gender
+                try:
+                    blob = cv2.dnn.blobFromImage(
+                        face_img, 1.0, (227, 227),
+                        (78.4263377603, 87.7689143744, 114.895847746),
+                        swapRB=False
+                    )
+                    gender_net.setInput(blob)
+                    gender_preds = gender_net.forward()
+                    gender = gender_list[gender_preds[0].argmax()]
+                    confidence = gender_preds[0].max()
+
+                    # Count based on prediction
+                    if confidence > 0.6:
+                        if gender == 'Male':
+                            male_count += 1
+                        else:
+                            female_count += 1
+
+                    # Draw rectangle on face
+                    cv2.rectangle(person_img, (fx, fy), (fx2, fy2), (0, 255, 255), 2)
+                    cv2.putText(person_img, f"{gender} ({confidence*100:.1f}%)", (fx, fy - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+                except:
+                    pass
+
+    # Draw person bounding boxes
+    annotated_frame = draw_bbox(frame, bbox, label, conf)
+
+    # Overlay counts
+    cv2.putText(annotated_frame, f"People: {label.count('person')}", (20, 30),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+    cv2.putText(annotated_frame, f"Males: {male_count}", (20, 60),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+    cv2.putText(annotated_frame, f"Females: {female_count}", (20, 90),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+
+    # Show frame
+    cv2.imshow("Real-time Gender Classification", annotated_frame)
+
+    # Press Q to quit
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-cap.release()
+# Release everything
+webcam.release()
 cv2.destroyAllWindows()
