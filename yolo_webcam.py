@@ -9,7 +9,7 @@ gender_net = cv2.dnn.readNetFromCaffe(
     "models/model_detection/gender_net.caffemodel"
 )
 
-gender_list = ['M', 'F']
+gender_list = ['Male', 'Female']
 
 # Start webcam
 webcam = cv2.VideoCapture(0)
