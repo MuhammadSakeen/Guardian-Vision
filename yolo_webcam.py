@@ -1,20 +1,24 @@
 import cv2
 import numpy as np
 
-# Load YOLOv3 model
-net = cv2.dnn.readNet("yolov4.weights", "yolov4.cfg")
+# Load YOLOv4 model
+net = cv2.dnn.readNet(
+    r"C:\Women_Safety_Analytics\models\yolov4.weights",
+    r"C:\Women_Safety_Analytics\models\yolov4.cfg"
+)
+
 layer_names = net.getLayerNames()
 output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
 
 # Load gender classification model
 gender_net = cv2.dnn.readNetFromCaffe(
-    "gender_deploy.prototxt",
-    "gender_net.caffemodel"
+    r"C:\Women_Safety_Analytics\models\model_detection\gender_deploy.prototxt",
+    r"C:\Women_Safety_Analytics\models\model_detection\gender_net.caffemodel"
 )
 GENDER_LIST = ["Male", "Female"]
 
 # Load COCO class labels
-with open("coco.names", "r") as f:
+with open(r"C:\Women_Safety_Analytics\data\coco.names", "r") as f:
     classes = [line.strip() for line in f.readlines()]
 
 # Capture video
