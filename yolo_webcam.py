@@ -15,7 +15,7 @@ gender_net = cv2.dnn.readNetFromCaffe(
     r"C:\Women_Safety_Analytics\models\model_detection\gender_deploy.prototxt",
     r"C:\Women_Safety_Analytics\models\model_detection\gender_net.caffemodel"
 )
-GENDER_LIST = ["Male", "Female"]
+GENDER_LIST = ["M", "F"]
 
 # Load COCO class labels
 with open(r"C:\Women_Safety_Analytics\data\coco.names", "r") as f:
@@ -79,7 +79,7 @@ while True:
                 confidence_gender = gender_preds[0].max() * 100
 
                 # Count genders
-                if gender == "Male":
+                if gender == "M":
                     male_count += 1
                     color = (255, 0, 0)  # Blue for male
                 else:
@@ -93,8 +93,8 @@ while True:
 
     # Display male and female counts
     cv2.rectangle(frame, (0, 0), (250, 50), (0, 0, 0), -1)
-    cv2.putText(frame, f"Males: {male_count}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
-    cv2.putText(frame, f"Females: {female_count}", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
+    cv2.putText(frame, f"M: {male_count}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+    cv2.putText(frame, f"F: {female_count}", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
 
     cv2.imshow("YOLO Gender Detection", frame)
 

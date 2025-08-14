@@ -1,2 +1,2 @@
 # Ignore YOLO weights
-yolov4.weights
+models/yolov4.weights
