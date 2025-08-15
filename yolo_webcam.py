@@ -1,102 +1,107 @@
+from ultralytics import YOLO
 import cv2
 import numpy as np
 
-# Load YOLOv4 model
-net = cv2.dnn.readNet(
-    r"C:\Women_Safety_Analytics\models\yolov4.weights",
-    r"C:\Women_Safety_Analytics\models\yolov4.cfg"
-)
-
-layer_names = net.getLayerNames()
-output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
+# Load YOLOv8n model
+model = YOLO("yolov8n.pt")
 
 # Load gender classification model
 gender_net = cv2.dnn.readNetFromCaffe(
     r"C:\Women_Safety_Analytics\models\model_detection\gender_deploy.prototxt",
     r"C:\Women_Safety_Analytics\models\model_detection\gender_net.caffemodel"
 )
-GENDER_LIST = ["M", "F"]
+GENDER_LIST = ["Male", "Female"]
 
-# Load COCO class labels
-with open(r"C:\Women_Safety_Analytics\data\coco.names", "r") as f:
-    classes = [line.strip() for line in f.readlines()]
+# Load Haar Cascade for face detection
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-# Capture video
+# Capture webcam
 cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+CONFIDENCE_THRESHOLD = 70  # Minimum confidence to accept gender prediction
+FACE_SHRINK_RATIO = 0.1    # Shrink detected face by 10% for better precision
 
 while True:
     ret, frame = cap.read()
     if not ret:
         break
-    
-    height, width, channels = frame.shape
 
-    # Detect objects with YOLO
-    blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0,0,0), True, crop=False)
-    net.setInput(blob)
-    outs = net.forward(output_layers)
+    # Run YOLOv8 detection for 'person' class
+    results = model(frame, classes=[0], conf=0.5)
 
-    boxes = []
-    confidences = []
-    class_ids = []
+    male_count, female_count = 0, 0
 
-    for out in outs:
-        for detection in out:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-            if classes[class_id] == "person" and confidence > 0.5:
-                # Object detected
-                center_x = int(detection[0] * width)
-                center_y = int(detection[1] * height)
-                w = int(detection[2] * width)
-                h = int(detection[3] * height)
+    for result in results:
+        for box in result.boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-                x = int(center_x - w / 2)
-                y = int(center_y - h / 2)
+            # Crop person box
+            person_img = frame[y1:y2, x1:x2]
+            if person_img.size == 0:
+                continue
 
-                boxes.append([x, y, w, h])
-                confidences.append(float(confidence))
-                class_ids.append(class_id)
+            h, w = person_img.shape[:2]
+            if h < 50 or w < 50:
+                continue
 
-    # Apply Non-Maximum Suppression
-    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+            # Adjust brightness/contrast
+            person_img = cv2.convertScaleAbs(person_img, alpha=1.2, beta=20)
 
-    male_count = 0
-    female_count = 0
+            # Detect faces inside person box
+            gray = cv2.cvtColor(person_img, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
 
-    if len(indexes) > 0:
-        for i in indexes.flatten():
-            x, y, w, h = boxes[i]
+            for (fx, fy, fw, fh) in faces:
+                # Shrink face box for precision
+                shrink_w, shrink_h = int(fw * FACE_SHRINK_RATIO), int(fh * FACE_SHRINK_RATIO)
+                sx1 = fx + shrink_w
+                sy1 = fy + shrink_h
+                sx2 = fx + fw - shrink_w
+                sy2 = fy + fh - shrink_h
+                face_img = person_img[sy1:sy2, sx1:sx2]
 
-            # Crop face/body area for gender detection
-            person_img = frame[y:y+h, x:x+w]
-            if person_img.size != 0:
-                blob_gender = cv2.dnn.blobFromImage(person_img, 1.0, (227, 227), (78.4263377603, 87.7689143744, 114.895847746), swapRB=False)
+                if face_img.size == 0:
+                    continue
+
+                # Prepare blob for gender model
+                blob_gender = cv2.dnn.blobFromImage(
+                    face_img, 1.0, (227, 227),
+                    (78.4263377603, 87.7689143744, 114.895847746),
+                    swapRB=False
+                )
                 gender_net.setInput(blob_gender)
                 gender_preds = gender_net.forward()
-                gender = GENDER_LIST[gender_preds[0].argmax()]
                 confidence_gender = gender_preds[0].max() * 100
 
-                # Count genders
-                if gender == "M":
-                    male_count += 1
-                    color = (255, 0, 0)  # Blue for male
+                if confidence_gender < CONFIDENCE_THRESHOLD:
+                    gender = "Unknown"
+                    color = (0, 255, 255)  # Yellow for uncertain
                 else:
-                    female_count += 1
-                    color = (255, 0, 255)  # Pink for female
+                    gender = GENDER_LIST[gender_preds[0].argmax()]
+                    color = (255, 0, 0) if gender == "Male" else (255, 0, 255)
 
-                # Draw bounding box and label
-                cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                label = f"{gender}: {confidence_gender:.1f}%"
-                cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                    # Count males/females
+                    if gender == "Male":
+                        male_count += 1
+                    else:
+                        female_count += 1
 
-    # Display male and female counts
+                # Draw face box & label
+                cv2.rectangle(frame, (x1+sx1, y1+sy1), (x1+sx2, y1+sy2), color, 2)
+                label = f"{gender}: {confidence_gender:.1f}%" if gender != "Unknown" else "Unknown"
+                cv2.putText(frame, label, (x1+sx1, y1+sy1-10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+    # Display counts
     cv2.rectangle(frame, (0, 0), (250, 50), (0, 0, 0), -1)
-    cv2.putText(frame, f"M: {male_count}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
-    cv2.putText(frame, f"F: {female_count}", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
+    cv2.putText(frame, f"Male: {male_count}", (10, 20),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+    cv2.putText(frame, f"Female: {female_count}", (10, 40),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
 
-    cv2.imshow("YOLO Gender Detection", frame)
+    cv2.imshow("Guardian Vision - YOLOv8n", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
