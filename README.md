@@ -7,7 +7,7 @@ This project currently supports real-time **person detection** using YOLOv8 and 
 ---
 
 ### Current Feature
-- Live webcam detection of persons using YOLOv8
+- Live webcam detection of persons using YOLOv8n
 - Filters only “person” class with confidence threshold
 - Bounding boxes and labels drawn on screen
 
@@ -20,7 +20,6 @@ This project currently supports real-time **person detection** using YOLOv8 and 
 ---
 
 ### Upcoming Features (Planned)
-- Gender classification
 - Lone woman detection
 - Alert logic for potential threats
 - Web UI using Streamlit
@@ -30,7 +29,7 @@ This project currently supports real-time **person detection** using YOLOv8 and 
 ### Tech Stack
 - Python
 - OpenCV
-- YOLOv8 (Ultralytics)
+- YOLOv8n (Ultralytics)
 
 ---
 
