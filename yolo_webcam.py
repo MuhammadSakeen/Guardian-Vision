@@ -28,7 +28,12 @@ while True:
             continue
 
         x1, y1, x2, y2 = map(int, box.xyxy[0])
-        person_roi = frame[y1:y2, x1:x2]
+        person_roi = frame[y1:y2, x1:x2] # roi - Region of Interest
+
+        h, w = person_roi.shape[:2]
+        if h < 30 or w < 30:
+            # skip tiny regions
+            continue
 
         try:
             analysis = DeepFace.analyze(
@@ -41,9 +46,9 @@ while True:
             if isinstance(analysis, list):
                 analysis = analysis[0]
 
-            age = analysis['age']
-            gender = analysis['dominant_gender']
-            gender_conf = analysis['gender'][gender]
+            age = int(round(analysis['age']))
+            gender = analysis.get('dominant_gender', 'Unknown')
+            gender_conf = analysis.get('gender', {}).get(gender, 0.0)
 
             # Update counts
             if gender == 'Man':
@@ -68,7 +73,7 @@ while True:
     cv2.putText(frame, f"Male: {male_count}  Female: {female_count}", (10, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
-    cv2.imshow("YOLO + DeepFace", frame)
+    cv2.imshow("Guardian Vision", frame)
 
     if cv2.waitKey(1) & 0xFF == 27:  # ESC to quit
         break
