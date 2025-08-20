@@ -1,37 +1,89 @@
-# Women Safety Analytics 🛡️
+# Guardian Vision
+*AI-powered surveillance system for women’s safety*
 
-A real-time AI-based surveillance system aimed at enhancing women’s safety in public environments using deep learning and computer vision.
-
-This project currently supports real-time **person detection** using YOLOv8 and OpenCV. It highlights detected persons with bounding boxes on a live webcam feed.
-
----
-
-### Current Feature
-- Live webcam detection of persons using YOLOv8n
-- Filters only “person” class with confidence threshold
-- Bounding boxes and labels drawn on screen
+Guardian Vision is a real-time AI-based analytics system designed to **enhance women’s safety** in public environments using deep learning and computer vision.  
+It detects people, identifies gender, and provides actionable insights through live video feeds.
 
 ---
 
-### Files
-- `yolo_webcam.py` — Main detection script using webcam
-- `README.md` — Project description
+## Features
+- **Real-time Person Detection** using YOLOv8n (Nano version, optimized for speed).  
+- **Face Detection** with Haarcascade inside each person bounding box.  
+- **Gender Classification** using Caffe model (Male/Female).  
+- **Live Counts** of males & females displayed on-screen.  
+- Works on **CPU/GPU** with webcam input.  
 
 ---
 
-### Upcoming Features (Planned)
-- Lone woman detection
-- Alert logic for potential threats
-- Web UI using Streamlit
+## Upcoming Features
+- Age estimation with Caffe age model.  
+- Lone woman detection in unsafe conditions.  
+- Threat/suspicious behavior alerts.  
+- Heatmap mapping of high-risk areas.  
+- Web Dashboard for remote monitoring.  
 
 ---
 
-### Tech Stack
-- Python
-- OpenCV
-- YOLOv8n (Ultralytics)
+## Project Structure
+
+guardian-vision/
+│
+├── guardian_vision.py          # main script
+├── requirements.txt
+├── README.md
+│
+├── data/
+│   └── coco.names              # COCO class names
+│
+├── models/
+│   └── model_detection/
+│       ├── age_deploy.prototxt
+│       ├── age_net.caffemodel
+│       ├── gender_deploy.prototxt
+│       ├── gender_net.caffemodel
+│       └── haarcascade_frontalface_default.xml   # important for face detection
+│
+└── weights/
+    └── yolov8n.pt              # YOLOv8n lightweight model
+
+
+## Tech Stack
+- **Python 3.10+**  
+- **OpenCV** (Haarcascade + DNN module)  
+- **YOLOv8n (Ultralytics)** for person detection  
+- **Caffe Models** for gender classification  
+- **NumPy** for array processing  
 
 ---
 
-### Project Goal
-To build a smart surveillance system capable of detecting and alerting unsafe conditions for women in real time.
+## Run the Project
+Clone the repo and install dependencies:
+```bash
+git clone https://github.com/MuhammadSakeen/Guardian-Vision.git
+cd Guardian-Vision
+pip install -r requirements.txt
+```
+
+Run Guardian Vision:
+```bash
+python guardian_vision.py
+```
+
+---
+
+## Download Models
+Due to large file sizes, models are **not included** in this repository.  
+Please download them and place inside `models/model_detection/`.
+
+- [YOLOv8n Weights](https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8n.pt)  
+- [Haarcascade Frontal Face](https://github.com/opencv/opencv/raw/master/data/haarcascadeshaarcascade_frontalface_default.xml)  
+- [gender_deploy.prototxt](https://github.com/spmallick/learnopencv/raw/master/AgeGender/models/gender_deploy.prototxt)  
+- [gender_net.caffemodel](https://github.com/spmallick/learnopencv/raw/master/AgeGender/models/gender_net.caffemodel)  
+
+---
+
+## Project Goal
+To build a **smart AI surveillance system** that:  
+- Detects unsafe conditions for women in real-time.  
+- Sends **alerts** for potential threats or misuse.  
+- Provides **data-driven insights** to law enforcement for **crime prevention**.  

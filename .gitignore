@@ -1,16 +1,22 @@
-# Ignore YOLO weights
-models/yolov4.weights
-
 # Virtual environment
 venv310/
+venv/
 
 # Python cache files
 __pycache__/
 *.pyc
 *.pyo
 
-# Model weights (optional if too big)
+# Model weights (large files - ignored)
 *.pt
 *.caffemodel
 *.h5
 *.onnx
+
+# Haarcascade files (optional, since they are small but can ignore if needed)
+*.xml
+
+# Logs / junk
+*.log
+.DS_Store
+Thumbs.db
