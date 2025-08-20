@@ -25,7 +25,7 @@ It detects people, identifies gender, and provides actionable insights through l
 ---
 
 ## Project Structure
-
+```
 Guardian_Vision/
 │
 ├── guardian_vision.py # Main script
@@ -45,8 +45,7 @@ Guardian_Vision/
 │
 └── weights/
 └── yolov8n.pt # YOLOv8n lightweight model
-
-
+```
 ## Tech Stack
 - **Python 3.10+**  
 - **OpenCV** (Haarcascade + DNN module)  
