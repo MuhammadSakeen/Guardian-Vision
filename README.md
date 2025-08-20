@@ -26,25 +26,25 @@ It detects people, identifies gender, and provides actionable insights through l
 
 ## Project Structure
 
-guardian-vision/
+Guardian_Vision/
 │
-├── guardian_vision.py          # main script
-├── requirements.txt
-├── README.md
+├── guardian_vision.py # Main script
+├── requirements.txt # Dependencies
+├── README.md # Project documentation
 │
 ├── data/
-│   └── coco.names              # COCO class names
+│ └── coco.names # COCO class names
 │
 ├── models/
-│   └── model_detection/
-│       ├── age_deploy.prototxt
-│       ├── age_net.caffemodel
-│       ├── gender_deploy.prototxt
-│       ├── gender_net.caffemodel
-│       └── haarcascade_frontalface_default.xml   # important for face detection
+│ └── model_detection/
+│ ├── age_deploy.prototxt # Age model config
+│ ├── age_net.caffemodel # Age model weights
+│ ├── gender_deploy.prototxt # Gender model config
+│ ├── gender_net.caffemodel # Gender model weights
+│ └── haarcascade_frontalface_default.xml # Haarcascade for face detection
 │
 └── weights/
-    └── yolov8n.pt              # YOLOv8n lightweight model
+└── yolov8n.pt # YOLOv8n lightweight model
 
 
 ## Tech Stack
