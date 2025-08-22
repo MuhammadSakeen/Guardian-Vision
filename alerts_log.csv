@@ -1,0 +1,5 @@
+timestamp,alert,male,female,camera_id,location
+2025-08-22 17:28:41,SOS Triggered (Both Hands Up),1,0,CCTV_01,Chennai Street
+2025-08-22 17:33:12,SOS Triggered (Both Hands Up),1,0,CCTV_01,Chennai Street
+2025-08-22 17:38:50,SOS Triggered (Keyboard),1,0,CCTV_01,Chennai Street
+2025-08-22 17:41:56,SOS Triggered (Keyboard),1,0,CCTV_01,Chennai Street
