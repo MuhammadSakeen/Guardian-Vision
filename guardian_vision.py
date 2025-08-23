@@ -94,7 +94,7 @@ def show_banner(text, duration=6):
     sos_banner_expire = time.time() + duration
 
 ensure_log_exists(ALERT_LOG_FILE)
-print("Starting Guardian Vision... Press 'q' to quit.")
+print("Starting Guardian Vision, Press 'q' to quit.")
 
 last_male_count = 0
 last_female_count = 0
