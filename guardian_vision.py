@@ -1,4 +1,4 @@
-# guardian_vision_with_sos_logging.py
+# guardian_vision_full_sos.py
 import os
 import cv2
 import csv
@@ -48,7 +48,6 @@ def trigger_sos(alert_reason, male_count, female_count, show_on_frame_callback=N
     global last_sos_time
     now = time.time()
     if now - last_sos_time < SOS_COOLDOWN:
-        print("SOS cooldown active, ignoring repeated SOS.")
         return
     last_sos_time = now
     log_alert(alert_reason, male_count, female_count)
@@ -59,9 +58,7 @@ def trigger_sos(alert_reason, male_count, female_count, show_on_frame_callback=N
 # Load Models
 # -----------------------------
 model = YOLO(r"models/weights/yolov8n.pt")
-face_cascade = cv2.CascadeClassifier(
-    r"models/model_detection/haarcascade_frontalface_default.xml"
-)
+face_cascade = cv2.CascadeClassifier(r"models/model_detection/haarcascade_frontalface_default.xml")
 gender_net = cv2.dnn.readNetFromCaffe(
     r"models/model_detection/gender_deploy.prototxt",
     r"models/model_detection/gender_net.caffemodel"
@@ -94,12 +91,12 @@ def show_banner(text, duration=6):
     sos_banner_expire = time.time() + duration
 
 ensure_log_exists(ALERT_LOG_FILE)
-print("Starting Guardian Vision, Press 'q' to shutdown the camera.")
+print("Starting Guardian Vision... Press 'q' to quit.")
 
 last_male_count = 0
 last_female_count = 0
 gesture_last_trigger = {"wave":0, "both_hands_up":0, "keyboard":0}
-active_alerts = []  # (text, expire_time)
+active_alerts = []
 
 while True:
     ret, frame = cap.read()
@@ -110,14 +107,13 @@ while True:
     female_count = 0
 
     # -----------------------------
-    # YOLO person detection
+    # YOLO person detection + face/gender
     # -----------------------------
     results = model(frame, stream=True, conf=0.45)
     for result in results:
         for box in result.boxes:
             cls = int(box.cls[0])
-            if cls != 0:
-                continue
+            if cls != 0: continue
             x1, y1, x2, y2 = map(int, box.xyxy[0])
             person_roi = frame[y1:y2, x1:x2]
             if person_roi.size == 0: continue
@@ -156,18 +152,12 @@ while True:
     cv2.putText(frame,f"Male: {male_count}",(10,20),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,0,0),2)
     cv2.putText(frame,f"Female: {female_count}",(10,45),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,0,255),2)
 
-    # -----------------------------
-    # Log alerts and update active_alerts for display
-    # -----------------------------
+    # Log alerts
     curr_time = time.time()
     for alert_text in alerts:
-        # Always log every alert detection
         log_alert(alert_text, male_count, female_count)
-        # Add to active_alerts for on-screen display
         if all(alert_text != a[0] for a in active_alerts):
             active_alerts.append((alert_text, curr_time + ALERT_DISPLAY_DURATION))
-
-    # Remove expired alerts
     active_alerts = [(text, expire) for text, expire in active_alerts if curr_time < expire]
 
     # Draw alerts
@@ -178,41 +168,41 @@ while True:
         y_pos -= 40
 
     # -----------------------------
-    # Gesture detection
+    # Gesture detection improved
     # -----------------------------
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     hands_results = hands.process(rgb)
     pose_results = pose.process(rgb)
 
+    # Both Hands Up detection (pose landmarks)
     both_hands_up = False
-    try:
-        if hands_results.multi_hand_landmarks and pose_results.pose_landmarks:
-            pose_lm = pose_results.pose_landmarks.landmark
-            left_sh_y = pose_lm[11].y
-            right_sh_y = pose_lm[12].y
-            wrists_y = [h.landmark[0].y for h in hands_results.multi_hand_landmarks]
-            shoulder_line = (left_sh_y+right_sh_y)/2.0
-            if len(wrists_y)>=2 and wrists_y[0]<shoulder_line and wrists_y[1]<shoulder_line:
-                both_hands_up = True
-    except Exception:
-        both_hands_up=False
+    if pose_results.pose_landmarks:
+        lm = pose_results.pose_landmarks.landmark
+        left_wrist_y = lm[15].y
+        right_wrist_y = lm[16].y
+        left_shoulder_y = lm[11].y
+        right_shoulder_y = lm[12].y
+        if left_wrist_y < left_shoulder_y and right_wrist_y < right_shoulder_y:
+            both_hands_up = True
 
-    wave_detected=False
+    # Wave detection (hands)
+    wave_detected = False
     if hands_results.multi_hand_landmarks:
-        hw = hands_results.multi_hand_landmarks[0]
-        wrist_x = hw.landmark[0].x
-        if last_wrist_x is not None:
-            dx = abs(wrist_x-last_wrist_x)
-            if dx>0.06:
-                wave_counter+=1
-                last_wrist_time=time.time()
-        last_wrist_x=wrist_x
-        if time.time()-last_wrist_time>1.6: wave_counter=0
-        if wave_counter>=4:
-            wave_detected=True
-            wave_counter=0
+        for hand_landmarks in hands_results.multi_hand_landmarks:
+            wrist_x = hand_landmarks.landmark[0].x
+            if last_wrist_x is not None:
+                dx = abs(wrist_x - last_wrist_x)
+                if dx > 0.08:
+                    wave_counter += 1
+                    last_wrist_time = curr_time
+            last_wrist_x = wrist_x
+    if curr_time - last_wrist_time > 2.0:
+        wave_counter = 0
+    if wave_counter >= 4:
+        wave_detected = True
+        wave_counter = 0
 
-    # Draw mediapipe
+    # Draw mediapipe landmarks
     if hands_results.multi_hand_landmarks:
         for hand_landmarks in hands_results.multi_hand_landmarks:
             mp_drawing.draw_landmarks(frame,hand_landmarks,mp_hands.HAND_CONNECTIONS)
@@ -222,7 +212,6 @@ while True:
     # -----------------------------
     # Trigger SOS gestures with cooldown
     # -----------------------------
-    curr_time = time.time()
     if wave_detected and curr_time - gesture_last_trigger["wave"] > GESTURE_COOLDOWN:
         gesture_last_trigger["wave"]=curr_time
         reason="SOS Triggered (Wave Gesture)"

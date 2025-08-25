@@ -3,3 +3,14 @@ timestamp,alert,male,female,camera_id,location
 2025-08-22 17:33:12,SOS Triggered (Both Hands Up),1,0,CCTV_01,Chennai Street
 2025-08-22 17:38:50,SOS Triggered (Keyboard),1,0,CCTV_01,Chennai Street
 2025-08-22 17:41:56,SOS Triggered (Keyboard),1,0,CCTV_01,Chennai Street
+2025-08-24 21:37:29,SOS Triggered (Wave Gesture),0,0,CCTV_01,Chennai Street
+2025-08-25 20:44:24,CCTV_01,Chennai Street,SOS (Wave),3,0
+2025-08-25 20:44:40,CCTV_01,Chennai Street,SOS (Wave),1,0
+2025-08-25 20:44:52,CCTV_01,Chennai Street,SOS (Keyboard),1,0
+2025-08-25 20:50:56,CCTV_01,Chennai Street,SOS Triggered (Wave),1,0
+2025-08-25 20:51:04,CCTV_01,Chennai Street,SOS Triggered (Wave),1,0
+2025-08-25 20:51:09,CCTV_01,Chennai Street,SOS Triggered (Both Hands Up),4,0
+2025-08-25 20:51:12,CCTV_01,Chennai Street,SOS Triggered (Wave),1,0
+2025-08-25 20:51:18,CCTV_01,Chennai Street,SOS (Keyboard),3,0
+2025-08-25 20:57:57,SOS Triggered (Keyboard),1,1,CCTV_01,Chennai Street
+2025-08-25 21:00:52,SOS Triggered (Both Hands Up),1,0,CCTV_01,Chennai Street
